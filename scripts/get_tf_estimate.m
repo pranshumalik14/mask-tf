@@ -1,5 +1,5 @@
 % returns an avg tf estimate; uniform bins
-function [] = get_tf_estimate(audio_in, audio_out, Fs_in, Fs_out, fmax, nbins)
+function [tf_estimate, fr_bins] = get_tf_estimate(audio_in, audio_out, Fs_in, Fs_out, fmax, nbins)
 
 fft_in  = fftshift(fft(audio_in));
 fft_out = fftshift(fft(audio_out));
@@ -15,7 +15,7 @@ fr_in  = -Fs_in/2:df_in:Fs_in/2-df_in;
 fr_out = -Fs_out/2:df_out:Fs_out/2-df_out;
 
 % tf sampling intervals
-df_bin   = floor(fmax/nbins); 
+df_bin   = floor(fmax/nbins);
 fr_bins  = 0:df_bin:fmax;
 
 % get average over the bins
@@ -32,8 +32,8 @@ for k = 1:nbins
 end
 fft_avg_out = [fft_avg_out fft_avg_out(end)]; % concatenate end value till end of freq range
 
-% tf_estimate
-
+% estimate transfer function
+tf_estimate = fft_avg_out./fft_avg_in;
 
 % Fs_sub = 8000;                    % sub-sampling frequency, in hertz
 % N_sub  = floor(dur*Fs_sub);       % number of points in sub-sampled signal
@@ -54,6 +54,9 @@ stairs(fr_bins, fft_avg_in);
 
 figure;
 stairs(fr_bins, fft_avg_out);
+
+figure;
+stairs(fr_bins, tf_estimate);
 
 end
 
