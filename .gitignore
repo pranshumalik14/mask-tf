@@ -128,11 +128,18 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Audio files
+*.wav
+*.m4a
+
+# MATLAB autosave files
+*.asv
+*.mat
+
+# image files
+*.png
+*.jpeg
+*.jpg
+
 # macOS
 .DS_Store
-
-# Audio and MATLAB files
-*.zip
-*.wav
-*.mat
-*.png
