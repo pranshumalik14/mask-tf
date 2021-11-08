@@ -20,11 +20,20 @@ df_2  = Fs_2/N_2;
 fr_1  = -Fs_1/2:df_1:Fs_1/2-df_1;
 fr_2  = -Fs_2/2:df_2:Fs_2/2-df_2;
 
-for k = N_1/2:N_1/2+ceil(fmax/df_1)
+beg_1 = floor(N_1/2 + 1);
+end_1 = beg_1 + ceil(fmax/df_1);
+beg_2 = floor(N_2/2 + 1);
+end_2 = beg_2 + ceil(fmax/df_2);
+
+for k = beg_1:end_1
     M_1(k) = apply_tf(fr_1(k), M_1(k), tf, fmax, nbins);
 end
 
-% clip the tf for mic 2 after fmax as well
+M_1(end_1+1:end) = 0;
+M_2(end_2+1:end) = 0;
+
+M_1(2:beg_1-1) = conj(M_1(end:-1:beg_1+1));
+M_2(2:beg_2-1) = conj(M_2(end:-1:beg_2+1));
 
 %%
 
