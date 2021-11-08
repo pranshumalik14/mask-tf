@@ -20,20 +20,17 @@ df_2  = Fs_2/N_2;
 fr_1  = -Fs_1/2:df_1:Fs_1/2-df_1;
 fr_2  = -Fs_2/2:df_2:Fs_2/2-df_2;
 
-beg_1 = floor(N_1/2 + 1);
-end_1 = beg_1 + ceil(fmax/df_1);
-beg_2 = floor(N_2/2 + 1);
-end_2 = beg_2 + ceil(fmax/df_2);
+idx_1 = fr_1(-fmax < fr_1 & fr_1 < fmax); idx_1 = [(idx_1(1)-fr_1(1))/df_1 (idx_1(end)-fr_1(1))/df_1];
+idx_2 = fr_2(-fmax < fr_2 & fr_2 < fmax); idx_2 = [(idx_2(1)-fr_2(1))/df_2 (idx_2(end)-fr_2(1))/df_2];
 
-for k = beg_1:end_1
+for k = idx_1(1):idx_1(2)
     M_1(k) = apply_tf(fr_1(k), M_1(k), tf, fmax, nbins);
 end
 
-M_1(end_1+1:end) = 0;
-M_2(end_2+1:end) = 0;
-
-M_1(2:beg_1-1) = conj(M_1(end:-1:beg_1+1));
-M_2(2:beg_2-1) = conj(M_2(end:-1:beg_2+1));
+M_1(1:idx_1(1)-1) = 0;
+M_1(idx_1(2)+1:end) = 0;
+M_2(1:idx_2(1)-1) = 0;
+M_2(idx_2(2)+1:end) = 0;
 
 %%
 
