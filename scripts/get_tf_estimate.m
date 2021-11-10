@@ -45,18 +45,22 @@ tf_estimate = fft_avg_out./fft_avg_in;
 % ffts and plots
 figure;
 plot(fr_in, abs(fft_in));
+title('Input FFT');
 
 figure;
 plot(fr_out, abs(fft_out));
+title('Output FFT');
 
 figure;
 stairs(fr_bins, fft_avg_in);
+title('Input FFT, Averaged Over Bins');
 
 figure;
 stairs(fr_bins, fft_avg_out);
+title('Output FFT, Averaged Over Bins');
 
 figure;
 stairs(fr_bins, tf_estimate);
+title('Estimated TF');
 
 end
-

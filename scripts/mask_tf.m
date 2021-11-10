@@ -42,40 +42,32 @@ M_2(idx_2(2)+1:end) = 0;
 % step 3: get tf estimate for calibrated and truncated spectra signals
 % step 4: repeat for all recordings and average tf over all of them
 
-% recording 1
-[mic_1, Fs_1] = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
-[mic_2, Fs_2] = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+% recording 1 tf
+[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
+[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+[tf_mask_1, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
-% calibrate mic 1 to mic 2
-M_1 = fftshift(fft(mic_1));
-M_2 = fftshift(fft(mic_2));
-N_1 = length(M_1);
-N_2 = length(M_2);
-df_1  = Fs_1/N_1;
-df_2  = Fs_2/N_2;
-fr_1  = -Fs_1/2:df_1:Fs_1/2-df_1;
-fr_2  = -Fs_2/2:df_2:Fs_2/2-df_2;
+% recording 2 tf
+[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
+[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+[tf_mask_2, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
-idx_1 = fr_1(-fmax < fr_1 & fr_1 < fmax); idx_1 = round([(idx_1(1)-fr_1(1))/df_1 (idx_1(end)-fr_1(1))/df_1]);
-idx_2 = fr_2(-fmax < fr_2 & fr_2 < fmax); idx_2 = round([(idx_2(1)-fr_2(1))/df_2 (idx_2(end)-fr_2(1))/df_2]);
+% recording 3 tf
+[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
+[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+[tf_mask_3, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
-% apply calibration function to mic 1 recording
-for k = idx_1(1):idx_1(2)
-    M_1(k) = apply_tf(fr_1(k), M_1(k), tf_calib, fmax, nbins);
-end
+% average tf over all recordings
+tf_mask_avg = (tf_mask_1 + tf_mask_2 + tf_mask_3)/3;
 
-% truncate FFTs after application of tf for (close-to) identical reconstruction within fmax
-M_1(1:idx_1(1)-1) = 0;
-M_1(idx_1(2)+1:end) = 0;
-M_2(1:idx_2(1)-1) = 0;
-M_2(idx_2(2)+1:end) = 0;
+% plot tf avg
+figure;
+stairs(fr_bins, tf_mask_avg);
+title('Estimated Avg TF');
 
-% invert FFTs to time domain
-mic_1_inv = ifft(ifftshift(M_1));
-mic_2_inv = ifft(ifftshift(M_2));
-
-% get tf estimate for mic 1 and mic 2 (after calibration)
-[tf_mask_1, fr_bins] = get_tf_estimate(mic_1_inv, mic_2_inv, Fs_1, Fs_2, fmax, nbins);
+figure;
+stairs(fr_bins, smooth(tf_mask_avg));
+title('Smoothened Avg TF');
 
 %% tf apply helper function
 
@@ -85,4 +77,39 @@ function scaled_mag = apply_tf(f, mag, tf, fmax, nbins)
     else
         scaled_mag = mag * tf(floor(abs(f)/(fmax/nbins)) + 1);
     end
+end
+
+%% mic calibration and tf estimate helper function
+
+function [tf_mask, fr_bins] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib)
+    % calibrate mic 1 to mic 2
+    M_1 = fftshift(fft(mic_1));
+    M_2 = fftshift(fft(mic_2));
+    N_1 = length(M_1);
+    N_2 = length(M_2);
+    df_1  = Fs_1/N_1;
+    df_2  = Fs_2/N_2;
+    fr_1  = -Fs_1/2:df_1:Fs_1/2-df_1;
+    fr_2  = -Fs_2/2:df_2:Fs_2/2-df_2;
+
+    idx_1 = fr_1(-fmax < fr_1 & fr_1 < fmax); idx_1 = round([(idx_1(1)-fr_1(1))/df_1 (idx_1(end)-fr_1(1))/df_1]);
+    idx_2 = fr_2(-fmax < fr_2 & fr_2 < fmax); idx_2 = round([(idx_2(1)-fr_2(1))/df_2 (idx_2(end)-fr_2(1))/df_2]);
+
+    % apply calibration function to mic 1 recording
+    for k = idx_1(1):idx_1(2)
+        M_1(k) = apply_tf(fr_1(k), M_1(k), tf_calib, fmax, nbins);
+    end
+
+    % truncate FFTs after application of tf for (close-to) identical reconstruction within fmax
+    M_1(1:idx_1(1)-1) = 0;
+    M_1(idx_1(2)+1:end) = 0;
+    M_2(1:idx_2(1)-1) = 0;
+    M_2(idx_2(2)+1:end) = 0;
+
+    % invert FFTs to time domain
+    mic_1_inv = ifft(ifftshift(M_1));
+    mic_2_inv = ifft(ifftshift(M_2));
+
+    % get tf estimate for mic 1 and mic 2 (after calibration)
+    [tf_mask, fr_bins] = get_tf_estimate(mic_1_inv, mic_2_inv, Fs_1, Fs_2, fmax, nbins);
 end
