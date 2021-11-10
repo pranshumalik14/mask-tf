@@ -15,7 +15,7 @@ fr_in  = -Fs_in/2:df_in:Fs_in/2-df_in;
 fr_out = -Fs_out/2:df_out:Fs_out/2-df_out;
 
 % tf sampling intervals
-df_bin   = floor(fmax/nbins);
+df_bin   = fmax/nbins;
 fr_bins  = 0:df_bin:fmax;
 
 % get average over the bins
