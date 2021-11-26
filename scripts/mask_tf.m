@@ -82,6 +82,8 @@ plot(abs(M_2));
 %   fft stem. Show that this offset is similar across all freqs and so we
 %   discareded phase info.
 % 2. recording phrases and inverting mask tf and applying mask tf on them!
+% (do blind tests: apply and see if x% of time can tell if) (fake mask
+% recordings -- couldn't tell the diff: quality.)
 % 3. distance recordings: 1 or 2. Show that not much noticeable diff in tf,
 %   so discarded idea.
 
