@@ -47,20 +47,40 @@ title('Estimated Avg TF');
 %% apply tf to a non-masked recording
 
 % todo: here we should compare speech and see if we get a similar response
-[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
-[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
-[mic_1, mic_2] = calib_mics(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
-[mic_1, mic_2] = calib_mics(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_mask_avg);
+[unmask_1, Fs_um_1]  = audioread('../recordings/postal_codes/L1Z9F2_unmasked.m4a');
+[mask_1, Fs_m_1]     = audioread('../recordings/postal_codes/L1Z9F2_masked.m4a');
+
+[unmask_tfapp_1, mask_trunc_1] = calib_mics(unmask_1, mask_1, Fs_um_1, Fs_m_1, fmax, nbins, tf_mask_avg);
 
 % check if ffts of mic_1 and mic_2 match each other
-M_1 = fftshift(fft(mic_1));
-M_2 = fftshift(fft(mic_2));
+UM_1 = fftshift(fft(unmask_1));
+M_1 = fftshift(fft(mask_1));
+figure;
+plot(abs(UM_1));
 figure;
 plot(abs(M_1));
+
+UM_tfapp_1 = fftshift(fft(unmask_tfapp_1));
+M_trunc_1 = fftshift(fft(mask_trunc_1));
 figure;
-plot(abs(M_2));
+plot(abs(UM_tfapp_1));
+figure;
+plot(abs(M_trunc_1));
+
+%% listen
+
+sound(real(unmask_1), Fs_um_1);
+sound(real(mask_1), Fs_m_1);
+
+pause(7);
+
+sound(real(unmask_tfapp_1), Fs_um_1);
+sound(real(mask_trunc_1), Fs_m_1);
 
 %% invert tf to get un-masked recording
+
+
+
 
 % todo: here we should compare speech and see if we get a similar response
 [mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
