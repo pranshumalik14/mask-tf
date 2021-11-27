@@ -46,78 +46,57 @@ title('Estimated Avg TF');
 
 %% apply tf to a non-masked recording
 
-% todo: here we should compare white noise back and forth from mic to
-% compare across the whole spectra.
-[unmask_white, Fs_um_white]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
-[mask_white, Fs_m_white]     = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+% compare low context speech and see if we get a similar response
+[unmask_all_codes, Fs_um_1]  = audioread('../recordings/postal_codes/all_postal_codes_unmasked_trimmed.m4a');
+[mask_all_codes, Fs_m_1]     = audioread('../recordings/postal_codes/all_postal_codes_masked_trimmed.m4a');
 
-[unmask_tfapp_white, mask_trunc_white] = calib_mics(unmask_white, mask_white, Fs_um_white, Fs_m_white, fmax, nbins, tf_mask_avg);
-[post_tf_white, ~] = get_tf_estimate(unmask_tfapp_white, mask_trunc_white, Fs_um_white, Fs_m_white, fmax, nbins);
-
-%%
-UM_white = fftshift(fft(unmask_white));
-M_white = fftshift(fft(mask_white));
-figure;
-plot(abs(UM_white));
-figure;
-plot(abs(M_white));
-%%
-UM_tfapp_white = fftshift(fft(unmask_tfapp_white));
-M_trunc_white = fftshift(fft(mask_trunc_white));
-figure;
-plot(abs(UM_tfapp_white));
-figure;
-plot(abs(M_trunc_white));
-
-%%
-
-% todo: here we should compare speech and see if we get a similar response
-[unmask_1, Fs_um_1]  = audioread('../recordings/postal_codes/all_postal_codes_unmasked_trimmed.m4a');
-[mask_1, Fs_m_1]     = audioread('../recordings/postal_codes/all_postal_codes_masked_trimmed.m4a');
-
-[unmask_tfapp_1, mask_trunc_1] = calib_mics(unmask_1, mask_1, Fs_um_1, Fs_m_1, fmax, nbins, tf_mask_avg);
-[post_tf_postal_code_1, ~] = get_tf_estimate(unmask_tfapp_1, mask_trunc_1, Fs_um_1, Fs_m_1, fmax, nbins);
+[unmask_tfapp_all_codes, mask_trunc_all_codes] = calib_mics(unmask_all_codes, mask_all_codes, Fs_um_1, Fs_m_1, fmax, nbins, tf_mask_avg);
+[post_tf_all_postal_codes, ~] = get_tf_estimate(unmask_tfapp_all_codes, mask_trunc_all_codes, Fs_um_1, Fs_m_1, fmax, nbins);
 
 % check if ffts of mic_1 and mic_2 match each other
-UM_1 = fftshift(fft(unmask_1));
-M_1 = fftshift(fft(mask_1));
+UM_all_codes = fftshift(fft(unmask_all_codes));
+M_all_codes = fftshift(fft(mask_all_codes));
 figure;
-plot(abs(UM_1));
+plot(abs(UM_all_codes));
 figure;
-plot(abs(M_1));
+plot(abs(M_all_codes));
 
-UM_tfapp_1 = fftshift(fft(unmask_tfapp_1));
-M_trunc_1 = fftshift(fft(mask_trunc_1));
+UM_tfapp_all_codes = fftshift(fft(unmask_tfapp_all_codes));
+M_trunc_all_codes = fftshift(fft(mask_trunc_all_codes));
 figure;
-plot(abs(UM_tfapp_1));
+plot(abs(UM_tfapp_all_codes));
 figure;
-plot(abs(M_trunc_1));
+plot(abs(M_trunc_all_codes));
 
 %% test difference in sound
 
 % original recordings
-sound(real(unmask_1), Fs_um_1);
-sound(real(mask_1), Fs_m_1);
+sound(rescale(real(unmask_all_codes), -1, 1), Fs_um_1);
+sound(rescale(real(mask_all_codes), -1, 1), Fs_m_1);
 
 pause(16);
 
 % transfer function applied
-sound(real(unmask_tfapp_1), Fs_um_1);
-sound(real(mask_trunc_1), Fs_m_1);
+sound(rescale(real(unmask_tfapp_all_codes), -1, 1), Fs_um_1);
+sound(rescale(real(mask_trunc_all_codes), -1, 1), Fs_m_1);
+
+% save audio
+audiowrite('../outputs/tfapp_all_postal_codes_unmasked_trimmed.m4a', rescale(real(unmask_tfapp_all_codes), -1, 1), Fs_um_1);
+audiowrite('../outputs/trunc_all_postal_codes_masked_trimmed.m4a', rescale(real(mask_trunc_all_codes), -1, 1), Fs_m_1);
 
 %% invert tf to get un-masked recording
 
-% todo: here we should compare speech and see if we get a similar response
+% compare across white noise for testing over a broader band
 [mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
 [mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
 [mic_1, mic_2] = calib_mics(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 [mic_2, mic_1] = calib_mics(mic_2, mic_1, Fs_2, Fs_1, fmax, nbins, 1./tf_mask_avg);
 
 % check if ffts of mic_1 and mic_2 match each other
-M_1 = fftshift(fft(mic_1));
+M_all_codes = fftshift(fft(mic_1));
 M_2 = fftshift(fft(mic_2));
 figure;
-plot(abs(M_1));
+plot(abs(M_all_codes));
 figure;
 plot(abs(M_2));
 
@@ -126,11 +105,6 @@ plot(abs(M_2));
 %   convert each freq stem to mag*e^jphi and subtract phi from non-masked
 %   fft stem. Show that this offset is similar across all freqs and so we
 %   discareded phase info.
-% 2. recording phrases and inverting mask tf and applying mask tf on them!
-% (do blind tests: apply and see if x% of time can tell if) (fake mask
-% recordings -- couldn't tell the diff: quality.)
-% 3. distance recordings: 1 or 2. Show that not much noticeable diff in tf,
-%   so discarded idea.
 
 %% tf apply helper function
 
