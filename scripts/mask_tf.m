@@ -27,13 +27,13 @@ nbins = 1000;
 [tf_mask_1, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
 % recording 2 tf
-[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
-[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_2_1_trimmed.wav');
+[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_2_2_trimmed.m4a');
 [tf_mask_2, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
 % recording 3 tf
-[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
-[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+[mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_3_1_trimmed.wav');
+[mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_3_2_trimmed.m4a');
 [tf_mask_3, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
 % average tf over all recordings
@@ -46,11 +46,37 @@ title('Estimated Avg TF');
 
 %% apply tf to a non-masked recording
 
+% todo: here we should compare white noise back and forth from mic to
+% compare across the whole spectra.
+[unmask_white, Fs_um_white]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
+[mask_white, Fs_m_white]     = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
+
+[unmask_tfapp_white, mask_trunc_white] = calib_mics(unmask_white, mask_white, Fs_um_white, Fs_m_white, fmax, nbins, tf_mask_avg);
+[post_tf_white, ~] = get_tf_estimate(unmask_tfapp_white, mask_trunc_white, Fs_um_white, Fs_m_white, fmax, nbins);
+
+%%
+UM_white = fftshift(fft(unmask_white));
+M_white = fftshift(fft(mask_white));
+figure;
+plot(abs(UM_white));
+figure;
+plot(abs(M_white));
+%%
+UM_tfapp_white = fftshift(fft(unmask_tfapp_white));
+M_trunc_white = fftshift(fft(mask_trunc_white));
+figure;
+plot(abs(UM_tfapp_white));
+figure;
+plot(abs(M_trunc_white));
+
+%%
+
 % todo: here we should compare speech and see if we get a similar response
-[unmask_1, Fs_um_1]  = audioread('../recordings/postal_codes/L1Z9F2_unmasked.m4a');
-[mask_1, Fs_m_1]     = audioread('../recordings/postal_codes/L1Z9F2_masked.m4a');
+[unmask_1, Fs_um_1]  = audioread('../recordings/postal_codes/all_postal_codes_unmasked_trimmed.m4a');
+[mask_1, Fs_m_1]     = audioread('../recordings/postal_codes/all_postal_codes_masked_trimmed.m4a');
 
 [unmask_tfapp_1, mask_trunc_1] = calib_mics(unmask_1, mask_1, Fs_um_1, Fs_m_1, fmax, nbins, tf_mask_avg);
+[post_tf_postal_code_1, ~] = get_tf_estimate(unmask_tfapp_1, mask_trunc_1, Fs_um_1, Fs_m_1, fmax, nbins);
 
 % check if ffts of mic_1 and mic_2 match each other
 UM_1 = fftshift(fft(unmask_1));
@@ -67,20 +93,19 @@ plot(abs(UM_tfapp_1));
 figure;
 plot(abs(M_trunc_1));
 
-%% listen
+%% test difference in sound
 
+% original recordings
 sound(real(unmask_1), Fs_um_1);
 sound(real(mask_1), Fs_m_1);
 
-pause(7);
+pause(16);
 
+% transfer function applied
 sound(real(unmask_tfapp_1), Fs_um_1);
 sound(real(mask_trunc_1), Fs_m_1);
 
 %% invert tf to get un-masked recording
-
-
-
 
 % todo: here we should compare speech and see if we get a similar response
 [mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
