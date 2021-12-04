@@ -10,7 +10,7 @@ fmax  = 7500;
 nbins = 1000;
 
 % get calibration tf from mic 1 (input) to match mic 2 (output) recording
-[tf_calib, fr_bins] = get_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins);
+[tf_calib, ~, fr_bins] = get_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins);
 
 [mic_1_calib, mic_2_calib] = calib_mics(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
@@ -24,25 +24,30 @@ nbins = 1000;
 % recording 1 tf
 [mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_1_trimmed.wav');
 [mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_1_2_trimmed.m4a');
-[tf_mask_1, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
+[tf_mask_1, phs_mask_1, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
 % recording 2 tf
 [mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_2_1_trimmed.wav');
 [mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_2_2_trimmed.m4a');
-[tf_mask_2, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
+[tf_mask_2, phs_mask_2, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
 % recording 3 tf
 [mic_1, Fs_1]  = audioread('../recordings/mask_tf_estimate/mask_tf_3_1_trimmed.wav');
 [mic_2, Fs_2]  = audioread('../recordings/mask_tf_estimate/mask_tf_3_2_trimmed.m4a');
-[tf_mask_3, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
+[tf_mask_3, phs_mask_3, ~] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
 % average tf over all recordings
-tf_mask_avg = smooth((tf_mask_1 + tf_mask_2 + tf_mask_3)/3);
+tf_mask_avg  = smooth((tf_mask_1 + tf_mask_2 + tf_mask_3)/3);
+phs_mask_avg = smooth((phs_mask_1 + phs_mask_2 + phs_mask_3)/3);
 
 % plot tf avg
 figure;
 stairs(fr_bins, tf_mask_avg);
 title('Estimated Avg TF');
+
+figure;
+stairs(fr_bins, phs_mask_avg); % wrapTo2Pi
+title('Estimated Avg Phase Response');
 
 %% apply tf to a non-masked recording
 
@@ -51,7 +56,7 @@ title('Estimated Avg TF');
 [mask_all_codes, Fs_m_1]     = audioread('../recordings/postal_codes/all_postal_codes_masked_trimmed.m4a');
 
 [unmask_tfapp_all_codes, mask_trunc_all_codes] = calib_mics(unmask_all_codes, mask_all_codes, Fs_um_1, Fs_m_1, fmax, nbins, tf_mask_avg);
-[post_tf_all_postal_codes, ~] = get_tf_estimate(unmask_tfapp_all_codes, mask_trunc_all_codes, Fs_um_1, Fs_m_1, fmax, nbins);
+[post_tf_all_postal_codes, ~, ~] = get_tf_estimate(unmask_tfapp_all_codes, mask_trunc_all_codes, Fs_um_1, Fs_m_1, fmax, nbins);
 
 % check if ffts of mic_1 and mic_2 match each other
 UM_all_codes = fftshift(fft(unmask_all_codes));
@@ -93,18 +98,12 @@ audiowrite('../outputs/trunc_all_postal_codes_masked_trimmed.m4a', rescale(real(
 [mic_2, mic_1] = calib_mics(mic_2, mic_1, Fs_2, Fs_1, fmax, nbins, 1./tf_mask_avg);
 
 % check if ffts of mic_1 and mic_2 match each other
-M_all_codes = fftshift(fft(mic_1));
+M_1 = fftshift(fft(mic_1));
 M_2 = fftshift(fft(mic_2));
 figure;
-plot(abs(M_all_codes));
+plot(abs(M_1));
 figure;
 plot(abs(M_2));
-
-%% todos (for report)
-% 1. get phase offset (batch delay) for the mask recording vs outside:
-%   convert each freq stem to mag*e^jphi and subtract phi from non-masked
-%   fft stem. Show that this offset is similar across all freqs and so we
-%   discareded phase info.
 
 %% tf apply helper function
 
@@ -151,10 +150,10 @@ end
 
 %% mask tf estimate helper function (with calibration)
 
-function [tf_mask, fr_bins] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib)
+function [tf_mask, phs_estimate, fr_bins] = get_mask_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib)
     % calibrate mic 1 to mic 2
     [mic_1, mic_2] = calib_mics(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins, tf_calib);
 
     % get tf estimate for mic 1 and mic 2 (after calibration)
-    [tf_mask, fr_bins] = get_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins);
+    [tf_mask, phs_estimate, fr_bins] = get_tf_estimate(mic_1, mic_2, Fs_1, Fs_2, fmax, nbins);
 end
